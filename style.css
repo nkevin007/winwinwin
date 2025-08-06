@@ -1,0 +1,470 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f8fafc;
+    color: #1f2937;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1000px; /* Changed from 1200px to 1000px in the user's provided CSS */
+    margin: auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+h1 {
+    color: #1f2937;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.2em;
+}
+
+h2 {
+    color: #374151;
+    margin-top: 40px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 10px;
+}
+
+.input-group {
+    margin-bottom: 30px;
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #374151;
+}
+
+input, button {
+    width: 100%;
+    margin: 8px 0;
+    padding: 12px;
+    font-size: 16px;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+button {
+    background-color: #3b82f6;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+    border: 2px solid #3b82f6;
+}
+
+button:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.function-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.function-buttons button {
+    padding: 8px 4px;
+    font-size: 12px;
+    background-color: #6b7280;
+    border-color: #6b7280;
+    margin: 0;
+}
+
+.function-buttons button:hover {
+    background-color: #4b5563;
+    border-color: #4b5563;
+}
+
+.math-help {
+    background-color: #f0f9ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.math-help h3 {
+    color: #1e40af;
+    margin-top: 0;
+    font-size: 16px;
+}
+
+.math-examples {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.graph-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.graph-controls label {
+    margin-top: 0;
+    font-size: 14px;
+}
+
+.graph-controls input,
+.graph-controls button {
+    margin: 5px 0;
+    padding: 8px;
+    font-size: 14px;
+}
+
+#resetZoom, #clearAll { /* Added #clearAll selector here */
+    grid-column: span 2; /* Changed from 1 / -1 to span 2 for consistency with two-column layout */
+    background-color: #6b7280;
+    border-color: #6b7280;
+}
+
+#resetZoom:hover, #clearAll:hover { /* Added #clearAll selector here */
+    background-color: #4b5563;
+    border-color: #4b5563;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+table th {
+    background-color: #f3f4f6;
+    color: #374151;
+    font-weight: 600;
+    padding: 15px;
+    text-align: center;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+table td {
+    padding: 12px 15px;
+    text-align: center;
+    border-bottom: 1px solid #e5e7eb;
+    font-family: 'Monaco', 'Courier New', monospace;
+}
+
+table tr:hover {
+    background-color: #f9fafb;
+}
+
+.canvas-wrapper {
+    width: 100%;
+    height: 500px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #ffffff;
+    position: relative;
+}
+
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+.calc-section {
+    background-color: #f9fafb;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+#calcOutput {
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 18px;
+    font-weight: bold;
+    min-height: 25px;
+    color: #1f2937;
+}
+
+/* Calculator Output Styles */
+.calc-success {
+    color: #059669;
+}
+
+.calc-error {
+    color: #dc2626;
+    font-weight: 700;
+}
+
+.calc-warning {
+    color: #d97706;
+}
+
+.calc-infinity {
+    color: #7c3aed;
+}
+
+.calc-complex {
+    color: #0891b2;
+    font-weight: 600;
+}
+
+.calc-placeholder {
+    color: #9ca3af;
+    font-style: italic;
+    font-weight: normal;
+}
+
+/* Enhanced table styling with result type indicators */
+.result-type {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.result-type.finite {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.result-type.undefined {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.result-type.positive_infinity,
+.result-type.negative_infinity {
+    background-color: #ede9fe;
+    color: #6b21a8;
+}
+
+.result-type.indeterminate {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.result-type.complex {
+    background-color: #e0f2fe;
+    color: #0c4a6e;
+}
+
+/* Math Error Styling */
+.result-type.math_error {
+    background-color: #fef2f2;
+    color: #b91c1c;
+}
+
+.result-type.syntax_error {
+    background-color: #fdf2f8;
+    color: #be185d;
+}
+
+.result-type.domain_error {
+    background-color: #fff7ed;
+    color: #c2410c;
+}
+
+.highlight-row {
+    background-color: #fef9c3;
+    font-weight: 600;
+}
+
+.highlight-row:hover {
+    background-color: #fef08a;
+}
+
+/* Error cells in table */
+.error-cell {
+    color: #dc2626;
+    font-weight: 700;
+    background-color: #fef2f2;
+}
+
+.undefined-cell {
+    color: #991b1b;
+    font-weight: 700;
+    background-color: #fee2e2;
+}
+
+.math-error-cell {
+    color: #b91c1c;
+    font-weight: 700;
+    background-color: #fef2f2;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .container {
+        margin: 10px;
+        padding: 20px;
+    }
+    
+    .graph-controls {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .canvas-wrapper {
+        height: 350px;
+    }
+    
+    h1 {
+        font-size: 1.8em;
+    }
+    
+    table th, table td {
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+    
+    .result-type {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+}
+
+/* Loading animation */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.loading {
+    animation: pulse 2s infinite;
+}
+
+/* Error styling */
+.error {
+    color: #ef4444;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    padding: 10px;
+    border-radius: 6px;
+    margin: 10px 0;
+}
+
+/* Calculator specific error states */
+.calculator-error {
+    background-color: #fef2f2;
+    border: 2px solid #fecaca;
+    color: #dc2626;
+    animation: errorFlash 0.3s ease-in-out;
+}
+
+@keyframes errorFlash {
+    0% { background-color: #fef2f2; }
+    50% { background-color: #fee2e2; }
+    100% { background-color: #fef2f2; }
+}
+
+/* Enhanced focus states for accessibility */
+input:focus,
+button:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Improved table readability */
+table tr:nth-child(even) {
+    background-color: #f9fafb;
+}
+
+table tr:nth-child(even):hover {
+    background-color: #f3f4f6;
+}
+
+/* Better visual hierarchy */
+.calc-section h2 {
+    color: #1f2937;
+    font-size: 1.3em;
+    margin-bottom: 20px;
+}
+
+/* Input validation states */
+input.invalid {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+}
+
+input.valid {
+    border-color: #10b981;
+    background-color: #f0fdf4;
+}
+
+/* Tooltips for error explanations */
+.tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 1000;
+}
+
+.tooltip:hover::after {
+    opacity: 1;
+}
+
+/* Two-column layout for main sections */
+.two-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+/* Responsive adjustment for two-column layout */
+@media (max-width: 768px) {
+    .two-column {
+        grid-template-columns: 1fr;
+    }
+}
