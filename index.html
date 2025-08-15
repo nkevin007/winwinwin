@@ -17,7 +17,7 @@
         }
 
         .container {
-            max-width: 1000px; /* Changed from 1200px to 1000px in the user's provided CSS */
+            max-width: 1000px;
             margin: auto;
             background: #ffffff;
             padding: 30px;
@@ -152,13 +152,46 @@
             font-size: 14px;
         }
 
-        #resetZoom, #clearAll { /* Added #clearAll selector here */
-            grid-column: span 2; /* Changed from 1 / -1 to span 2 for consistency with two-column layout */
+        .zoom-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .zoom-controls button {
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        #zoomIn {
+            background-color: #10b981;
+            border-color: #10b981;
+        }
+
+        #zoomIn:hover {
+            background-color: #059669;
+            border-color: #059669;
+        }
+
+        #zoomOut {
+            background-color: #f59e0b;
+            border-color: #f59e0b;
+        }
+
+        #zoomOut:hover {
+            background-color: #d97706;
+            border-color: #d97706;
+        }
+
+        #resetZoom, #clearAll {
+            grid-column: span 2;
             background-color: #6b7280;
             border-color: #6b7280;
         }
 
-        #resetZoom:hover, #clearAll:hover { /* Added #clearAll selector here */
+        #resetZoom:hover, #clearAll:hover {
             background-color: #4b5563;
             border-color: #4b5563;
         }
@@ -201,6 +234,21 @@
             overflow: hidden;
             background-color: #ffffff;
             position: relative;
+            cursor: crosshair;
+        }
+
+        .zoom-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 10;
         }
 
         canvas {
@@ -349,7 +397,7 @@
                 grid-template-columns: 1fr 1fr;
             }
             
-            .function-buttons { /* Added for better responsiveness of function buttons */
+            .function-buttons {
                 grid-template-columns: repeat(4, 1fr);
             }
             
@@ -481,6 +529,37 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Message box styles */
+        .message-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0;
+            animation: fadeInOut 3s forwards;
+        }
+        .message-box.error {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .message-box.success {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            10% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            90% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        }
     </style>
 </head>
 <body>
@@ -506,7 +585,6 @@
                 <h2>📈 Function Limits & Graphing</h2>
                 <div class="input-group">
                     <label for="functionInput">Enter function f(x):</label>
-                    <!-- Pre-filled with a default function for immediate graphing -->
                     <input type="text" id="functionInput" placeholder="e.g., sin(x)/x, ln(x), e^x, x^2" value="sin(x)/x">
                     
                     <div class="function-buttons">
@@ -527,7 +605,6 @@
 
                 <div class="input-group">
                     <label for="approachesInput">x approaches:</label>
-                    <!-- Pre-filled with a default value -->
                     <input type="number" id="approachesInput" placeholder="e.g., 0" step="any" value="0">
                 </div>
 
@@ -545,6 +622,11 @@
                     
                     <label for="yMax">Y Max:</label>
                     <input type="number" id="yMax" step="any">
+                    
+                    <div class="zoom-controls">
+                        <button id="zoomIn">🔍+ Zoom In</button>
+                        <button id="zoomOut">🔍- Zoom Out</button>
+                    </div>
                     
                     <button id="resetZoom">🔄 Reset Zoom</button>
                     <button id="clearAll">🗑️ Clear All</button>
@@ -585,6 +667,7 @@
         </div>
 
         <div class="canvas-wrapper">
+            <div class="zoom-info" id="zoomInfo"></div>
             <canvas id="graphCanvas"></canvas>
         </div>
 
@@ -610,6 +693,9 @@
         const yMaxInput = document.getElementById('yMax');
         const resetZoomBtn = document.getElementById('resetZoom');
         const clearAllBtn = document.getElementById('clearAll');
+        const zoomInBtn = document.getElementById('zoomIn');
+        const zoomOutBtn = document.getElementById('zoomOut');
+        const zoomInfo = document.getElementById('zoomInfo');
 
         // Canvas and rendering
         let canvas = document.getElementById('graphCanvas');
@@ -619,6 +705,10 @@
         let canvasWidth = 0;
         let canvasHeight = 0;
         let graphBounds = { xMin: -10, xMax: 10, yMin: -10, yMax: 10 };
+
+        // Mouse interaction variables
+        let isDragging = false;
+        let lastMousePos = { x: 0, y: 0 };
 
         // Mathematical result types
         const ResultType = {
@@ -658,49 +748,30 @@
         // Enhanced mathematical evaluation with comprehensive error handling
         function evaluateMathExpression(expression, variables = {}) {
             try {
-                // Enhanced pre-processing for common mathematical notations
                 let processedExpr = expression
-                    // Handle exponents
-                    //.replace(/\^/g, '**')
                     .replace(/(\d+|\w+|\))\*\*(\d+|\w+|\()/g, '($1)**($2)')
-                    
-                    // Handle logarithms
                     .replace(/log\(/g, 'log10(')
                     .replace(/ln\(/g, 'log(')
                     .replace(/log10\(/g, 'log10(')
                     .replace(/log2\(/g, 'log2(')
-                    
-                    // Handle exponentials
                     .replace(/e\^/g, 'exp(')
                     .replace(/exp\(/g, 'exp(')
-                    
-                    // Handle constants
                     .replace(/\be\b/g, 'e')
                     .replace(/\bpi\b/g, 'pi')
                     .replace(/π/g, 'pi')
-                    
-                    // Handle roots
                     .replace(/√/g, 'sqrt')
                     .replace(/cbrt/g, 'cbrt')
-                    
-                    // Handle absolute value
                     .replace(/abs\(/g, 'abs(')
                     .replace(/\|([^|]+)\|/g, 'abs($1)')
-                    
-                    // Handle trigonometric functions
                     .replace(/sin\(/g, 'sin(')
                     .replace(/cos\(/g, 'cos(')
                     .replace(/tan\(/g, 'tan(')
                     .replace(/asin\(/g, 'asin(')
                     .replace(/acos\(/g, 'acos(')
                     .replace(/atan\(/g, 'atan(')
-                    
-                    // Handle hyperbolic functions
                     .replace(/sinh\(/g, 'sinh(')
                     .replace(/cosh\(/g, 'cosh(')
                     .replace(/tanh\(/g, 'tanh(')
-                    
-                    // Handle implicit multiplication
                     .replace(/(\d)([a-zA-Z\(])/g, '$1*$2')
                     .replace(/\)(\d)/g, ')*$1')
                     .replace(/\)\(/g, ')*(');
@@ -737,7 +808,6 @@
 
         // Analyze mathematical results and categorize them
         function analyzeResult(result, expression, variables) {
-            // Handle complex numbers
             if (typeof result === 'object' && result.re !== undefined) {
                 if (Math.abs(result.im) < 1e-10) {
                     return analyzeResult(result.re, expression, variables);
@@ -749,7 +819,6 @@
                 };
             }
             
-            // Handle arrays/matrices
             if (Array.isArray(result)) {
                 return {
                     type: ResultType.FINITE,
@@ -758,7 +827,6 @@
                 };
             }
             
-            // Handle numbers
             if (typeof result === 'number') {
                 if (isNaN(result)) {
                     return {
@@ -768,7 +836,6 @@
                     };
                 }
                 
-                // All infinities are "Undefined" like common calculators
                 if (!isFinite(result)) {
                     return {
                         type: ResultType.UNDEFINED,
@@ -777,7 +844,6 @@
                     };
                 }
                 
-                // Finite number
                 return {
                     type: ResultType.FINITE,
                     value: result,
@@ -785,7 +851,6 @@
                 };
             }
             
-            // Handle other types
             return {
                 type: ResultType.FINITE,
                 value: result,
@@ -797,7 +862,6 @@
         function handleMathError(error, expression, variables) {
             const errorMsg = error.message.toLowerCase();
             
-            // Division by zero - "Undefined"
             if (errorMsg.includes('division by zero') || errorMsg.includes('divide by zero')) {
                 return {
                     type: ResultType.UNDEFINED,
@@ -806,7 +870,6 @@
                 };
             }
             
-            // Domain errors
             if (errorMsg.includes('sqrt') || errorMsg.includes('asin') || errorMsg.includes('acos')) {
                 return {
                     type: ResultType.MATH_ERROR,
@@ -815,7 +878,6 @@
                 };
             }
             
-            // Logarithm errors
             if (errorMsg.includes('log')) {
                 return {
                     type: ResultType.MATH_ERROR,
@@ -824,7 +886,6 @@
                 };
             }
             
-            // Syntax errors
             if (errorMsg.includes('syntax') || errorMsg.includes('unexpected') || errorMsg.includes('parse')) {
                 return {
                     type: ResultType.SYNTAX_ERROR,
@@ -833,7 +894,6 @@
                 };
             }
             
-            // Generic error
             return {
                 type: ResultType.UNDEFINED,
                 value: NaN,
@@ -847,17 +907,14 @@
             
             const absNum = Math.abs(num);
             
-            // Very small numbers (scientific notation)
             if (absNum < 1e-4 && absNum !== 0) {
                 return num.toExponential(3);
             }
             
-            // Very large numbers (scientific notation)
             if (absNum >= 1e6) {
                 return num.toExponential(3);
             }
             
-            // Regular numbers
             if (absNum < 1) {
                 return num.toFixed(6).replace(/\.?0+$/, '');
             }
@@ -904,6 +961,55 @@
             ctx.textBaseline = 'middle';
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
+        }
+
+        // Enhanced zoom functionality
+        function zoomGraph(factor, centerX = null, centerY = null) {
+            const xRange = graphBounds.xMax - graphBounds.xMin;
+            const yRange = graphBounds.yMax - graphBounds.yMin;
+            
+            // If no center point is provided, use the center of the current view
+            if (centerX === null || centerY === null) {
+                centerX = (graphBounds.xMin + graphBounds.xMax) / 2;
+                centerY = (graphBounds.yMin + graphBounds.yMax) / 2;
+            }
+            
+            const newXRange = xRange * factor;
+            const newYRange = yRange * factor;
+            
+            graphBounds.xMin = centerX - newXRange / 2;
+            graphBounds.xMax = centerX + newXRange / 2;
+            graphBounds.yMin = centerY - newYRange / 2;
+            graphBounds.yMax = centerY + newYRange / 2;
+            
+            updateControlInputs();
+            updateZoomInfo();
+            drawGraph();
+        }
+
+        // Pan the graph
+        function panGraph(deltaX, deltaY) {
+            const xRange = graphBounds.xMax - graphBounds.xMin;
+            const yRange = graphBounds.yMax - graphBounds.yMin;
+            
+            const xShift = (deltaX / canvasWidth) * xRange;
+            const yShift = (deltaY / canvasHeight) * yRange;
+            
+            graphBounds.xMin -= xShift;
+            graphBounds.xMax -= xShift;
+            graphBounds.yMin += yShift; // Note: Y is inverted in canvas coordinates
+            graphBounds.yMax += yShift;
+            
+            updateControlInputs();
+            updateZoomInfo();
+            drawGraph();
+        }
+
+        // Update zoom info display
+        function updateZoomInfo() {
+            const xRange = graphBounds.xMax - graphBounds.xMin;
+            const yRange = graphBounds.yMax - graphBounds.yMin;
+            zoomInfo.textContent = `X: ${formatNumber(xRange)} | Y: ${formatNumber(yRange)}`;
         }
 
         // Generate points for graphing
@@ -1052,7 +1158,7 @@
             const xStep = calculateStep(xRange, canvasWidth / 100);
             for (let x = Math.ceil(bounds.xMin / xStep) * xStep; x <= bounds.xMax; x += xStep) {
                 const { x: cx, y: cy } = mathToCanvas(x, 0, bounds);
-                if (Math.abs(x) > 1e-6) { // Avoid labeling zero twice
+                if (Math.abs(x) > 1e-6) {
                     ctx.fillText(formatNumber(x), cx, cy > canvasHeight - 15 ? canvasHeight - 15 : cy + 15);
                 }
             }
@@ -1062,7 +1168,7 @@
             const yStep = calculateStep(yRange, canvasHeight / 100);
             for (let y = Math.ceil(bounds.yMin / yStep) * yStep; y <= bounds.yMax; y += yStep) {
                 const { x: cx, y: cy } = mathToCanvas(0, y, bounds);
-                if (Math.abs(y) > 1e-6) { // Avoid labeling zero twice
+                if (Math.abs(y) > 1e-6) {
                     ctx.fillText(formatNumber(y), cx > canvasWidth - 40 ? canvasWidth - 40 : cx + 5, cy);
                 }
             }
@@ -1191,7 +1297,6 @@
             currentApproach = parseFloat(xApproach.value) || 0;
 
             if (!currentFunction) {
-                // Using a custom message box instead of alert() as per instructions
                 displayMessageBox('Please enter a function f(x).', 'error');
                 fInput.focus();
                 return;
@@ -1199,6 +1304,7 @@
             
             graphBounds = findGraphBounds(currentFunction, currentApproach);
             updateControlInputs();
+            updateZoomInfo();
             generateTable(currentFunction, currentApproach);
             drawGraph();
         }
@@ -1210,6 +1316,7 @@
             xMaxInput.value = '';
             yMinInput.value = '';
             yMaxInput.value = '';
+            updateZoomInfo();
             drawGraph();
         }
 
@@ -1236,7 +1343,7 @@
                 fInput.classList.remove('invalid', 'valid');
                 return;
             }
-            const testValue = 1; // Test with a default value, ideally should be within a valid domain
+            const testValue = 1;
             const result = evaluateMathExpression(fn, { x: testValue });
             
             if (result.type === ResultType.SYNTAX_ERROR) {
@@ -1282,49 +1389,128 @@
             
             setTimeout(() => {
                 messageBox.remove();
-            }, 3000); // Message disappears after 3 seconds
+            }, 3000);
         }
 
-        // Add CSS for the message box
-        const style = document.createElement('style');
-        style.textContent = `
-            .message-box {
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                padding: 15px 25px;
-                border-radius: 8px;
-                font-weight: bold;
-                z-index: 10000;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                opacity: 0;
-                animation: fadeInOut 3s forwards;
-            }
-            .message-box.error {
-                background-color: #fef2f2;
-                color: #dc2626;
-                border: 1px solid #fecaca;
-            }
-            .message-box.success {
-                background-color: #dcfce7;
-                color: #166534;
-                border: 1px solid #bbf7d0;
-            }
-            @keyframes fadeInOut {
-                0% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
-                10% { opacity: 1; transform: translateX(-50%) translateY(0); }
-                90% { opacity: 1; transform: translateX(-50%) translateY(0); }
-                100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
-            }
-        `;
-        document.head.appendChild(style);
+        // Mouse event handlers for interactive panning and zooming
+        function getMousePos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: evt.clientX - rect.left,
+                y: evt.clientY - rect.top
+            };
+        }
 
         // Event Listeners
         calculateBtn.addEventListener('click', handleCalculate);
         resetZoomBtn.addEventListener('click', handleResetZoom);
         clearAllBtn.addEventListener('click', handleClearAll);
         evalCalc.addEventListener('click', evaluateScientificCalc);
+
+        // Enhanced zoom controls
+        zoomInBtn.addEventListener('click', () => {
+            zoomGraph(0.75); // Zoom in by reducing range by 25%
+        });
+
+        zoomOutBtn.addEventListener('click', () => {
+            zoomGraph(1.5); // Zoom out by increasing range by 50%
+        });
+
+        // Mouse wheel zoom
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const mousePos = getMousePos(canvas, e);
+            const mathPos = canvasToMath(mousePos.x, mousePos.y, graphBounds);
+            
+            const zoomFactor = e.deltaY > 0 ? 1.2 : 0.8;
+            zoomGraph(zoomFactor, mathPos.x, mathPos.y);
+        });
+
+        // Mouse drag panning
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMousePos = getMousePos(canvas, e);
+            canvas.style.cursor = 'grabbing';
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const mousePos = getMousePos(canvas, e);
+                const deltaX = mousePos.x - lastMousePos.x;
+                const deltaY = mousePos.y - lastMousePos.y;
+                
+                panGraph(-deltaX, -deltaY);
+                lastMousePos = mousePos;
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+            canvas.style.cursor = 'crosshair';
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+            canvas.style.cursor = 'crosshair';
+        });
+
+        // Touch events for mobile support
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (e.touches.length === 1) {
+                isDragging = true;
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                lastMousePos = {
+                    x: touch.clientX - rect.left,
+                    y: touch.clientY - rect.top
+                };
+            }
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (isDragging && e.touches.length === 1) {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const touchPos = {
+                    x: touch.clientX - rect.left,
+                    y: touch.clientY - rect.top
+                };
+                
+                const deltaX = touchPos.x - lastMousePos.x;
+                const deltaY = touchPos.y - lastMousePos.y;
+                
+                panGraph(-deltaX, -deltaY);
+                lastMousePos = touchPos;
+            }
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            isDragging = false;
+        });
+
+        // Manual zoom input updates
+        function handleManualZoomUpdate() {
+            const xMin = parseFloat(xMinInput.value);
+            const xMax = parseFloat(xMaxInput.value);
+            const yMin = parseFloat(yMinInput.value);
+            const yMax = parseFloat(yMaxInput.value);
+            
+            if (!isNaN(xMin) && !isNaN(xMax) && !isNaN(yMin) && !isNaN(yMax)) {
+                if (xMin < xMax && yMin < yMax) {
+                    graphBounds = { xMin, xMax, yMin, yMax };
+                    updateZoomInfo();
+                    drawGraph();
+                }
+            }
+        }
+
+        xMinInput.addEventListener('change', handleManualZoomUpdate);
+        xMaxInput.addEventListener('change', handleManualZoomUpdate);
+        yMinInput.addEventListener('change', handleManualZoomUpdate);
+        yMaxInput.addEventListener('change', handleManualZoomUpdate);
         
         fInput.addEventListener('input', validateFunctionInput);
         calcInput.addEventListener('keydown', (e) => {
@@ -1339,9 +1525,9 @@
         // Initial setup - Graph a default function on page load
         window.addEventListener('DOMContentLoaded', () => {
             setupCanvas();
+            updateZoomInfo();
             handleCalculate(); // Automatically graph the default function
         });
     </script>
 </body>
 </html>
-
